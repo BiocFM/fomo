@@ -1,3 +1,8 @@
+#' @importFrom basilisk setBasiliskCheckVersions
+.onLoad <- function(libname, pkgname) {
+  basilisk::setBasiliskCheckVersions(FALSE)
+}
+
 #' @importFrom basilisk BasiliskEnvironment
 .scgpt <- BasiliskEnvironment(
   pkgname="BiocFoundationGPU", 
@@ -21,3 +26,10 @@
   envname="nimbus",
   packages=c("python==3.10.0"),
   pip= c("Nimbus-Inference==0.0.5"))
+
+  #' @importFrom basilisk BasiliskEnvironment
+.nicheformer <- BasiliskEnvironment(
+  pkgname="BiocFoundationGPU", 
+  envname="nicheformer",
+  packages=c("python==3.10.0"),
+  pip= c("transformers==4.57.6","tiktoken==0.9.0","sentencepiece==0.2.1","git+https://github.com/theislab/nicheformer.git@485cadbc5caa15119adfd54228f8a8af835fcabc"))

@@ -1,0 +1,161 @@
+---
+title: "Running Nicheformer foundational model"
+author: ""
+date: "`r format(Sys.Date(), '%m/%d/%Y')`"
+abstract: >
+This package takes an h5ad file with the gene count matrix and spatial coordinates as input, runs Nicheformer creating the Python environment automatically, and returns a matrix with the embeddings.
+  
+output:
+  rmarkdown::html_document:
+    highlight: pygments
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Running Nicheformer foundational model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\usepackage[utf8]{inputenc}
+---
+
+Loading the necessary packages to run `Nicheformer` in R
+
+```{r setup}
+library(anndataR)
+library(BiocFoundationGPU)
+library(SpatialExperiment)
+```
+
+Preparing the annDataR object
+
+```{r annDataR_creation}
+spe <- readRDS(
+  system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "BiocFoundationGPU")
+)
+
+spatialCoords(spe) |> as.data.frame() -> coords_df
+colData(spe)$x_coord <- coords_df[, 1]
+colData(spe)$y_coord <- coords_df[, 2]
+reducedDim(spe, "spatial") <- as.matrix(spatialCoords(spe))
+
+adata <- as_AnnData(spe)
+colnames(adata$obsm$spatial) <- c("x_coord", "y_coord")
+```
+
+Here, we are using a mouse cosmx-based example with gene symbols as variable names. However, `Nicheformer` requires human Ensembl IDs. Therefore, this chunk retrieves and replaces the orthologues 
+
+```{r orthologous}
+library(homologene)
+library(org.Hs.eg.db)
+library(AnnotationDbi)
+
+gene_symbols <- adata$var_names
+
+# mouse (taxid 10090) -> human (taxid 9606) ortholog symbols
+orthologs <- homologene(gene_symbols, inTax = 10090, outTax = 9606)
+# columns: "10090" (mouse symbol), "9606" (human symbol)
+
+# human symbol -> human Ensembl ID
+human_ensembl <- mapIds(
+  org.Hs.eg.db,
+  keys      = orthologs[["9606"]],
+  column    = "ENSEMBL",
+  keytype   = "SYMBOL",
+  multiVals = "first"
+)
+
+orthologs$ensembl_id <- human_ensembl[orthologs[["9606"]]]
+
+# match back to original gene order
+new_names <- ifelse(
+  gene_symbols %in% orthologs[["10090"]],
+  orthologs$ensembl_id[match(gene_symbols, orthologs[["10090"]])],
+  gene_symbols
+)
+
+# keep only valid Ensembl IDs (start with ENSG) and not duplicated
+is_ensembl  <- grepl("^ENSG", new_names)
+is_unique   <- !duplicated(new_names)
+keep        <- is_ensembl & is_unique
+
+message(sum(keep), " genes kept out of ", length(new_names))
+
+adata <- adata[, keep]$as_InMemoryAnnData()
+rownames(adata$var) <- new_names[keep]
+```
+
+Generating the `h5ad` file and running `Nicheformer` in R
+
+```{r running_nicheformer}
+# write anndata to tempfile 
+adata$write_h5ad(
+  tp <- tempfile(fileext = ".h5ad"), 
+  mode = "w"
+)
+nicheformer_data <- Run_nicheformer(adata_path = tp,
+                                  technology = "cosmx")
+```
+
+Downstream analysis using the embeddings to calculate clusters using a graph-based approach
+
+```{r clustering}
+library(ggplot2)
+library(uwot)
+library(bluster)
+library(cluster)     
+library(patchwork)
+library(dplyr)
+
+set.seed(1234)
+
+data_for_clustering <- nicheformer_data
+
+leiden_clusters <- clusterRows(
+    data_for_clustering,
+    NNGraphParam(
+        k             = 30,
+        type          = "jaccard",        
+        cluster.fun   = "leiden",
+        cluster.args  = list(
+            resolution_parameter = 1.0,  
+            objective_function   = "modularity"
+        )
+    )
+)
+
+n_clusters <- length(unique(leiden_clusters))
+message(sprintf("Leiden found %d clusters", n_clusters))
+
+umap_2d <- umap(
+    data_for_clustering,
+    n_components = 2,
+    n_neighbors  = 30,
+    min_dist     = 0.3,
+    metric       = "cosine"   
+)
+
+plot_df <- data.frame(
+    umap1   = umap_2d[, 1],
+    umap2   = umap_2d[, 2],
+    x       = adata$obs$x_coord,
+    y       = adata$obs$y_coord,
+    cluster = factor(leiden_clusters)
+)
+
+p_umap <- ggplot(plot_df, aes(umap1, umap2, color = cluster)) +
+    geom_point(size = 0.6, alpha = 0.7) +
+    theme_classic() +
+    labs(title = "Embedding space (UMAP)", x = "UMAP 1", y = "UMAP 2") +
+    guides(color = guide_legend(override.aes = list(size = 3)))
+
+p_spatial <- ggplot(plot_df, aes(x, y, color = cluster)) +
+    geom_point(size = 0.6, alpha = 0.7) +
+    coord_fixed() +
+    theme_classic() +
+    labs(title = "Physical space", x = "x", y = "y") +
+    guides(color = guide_legend(override.aes = list(size = 3)))
+
+p_umap + p_spatial + plot_layout(guides = "collect")
+```
+
+```{r sessionInfo}
+sessionInfo()
+```

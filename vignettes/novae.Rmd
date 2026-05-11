@@ -68,3 +68,7 @@ ggplot(plot_df, aes(x = x, y = y, color = domain)) +
   theme_classic() +
   labs(x = "x", y = "y", color = "Novae domain")
 ```
+
+```{r sessionInfo}
+sessionInfo()
+```

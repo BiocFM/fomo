@@ -16,3 +16,4 @@ Currently there are environments for the following models:
 -   scGPT (<https://github.com/bowang-lab/scGPT>)
 -   Novae (<https://github.com/prism-oncology/novae>)
 -   KRONOS (<https://github.com/mahmoodlab/KRONOS>)
+-   Nicheformer (<https://github.com/theislab/nicheformer>)
