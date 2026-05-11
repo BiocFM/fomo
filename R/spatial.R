@@ -65,10 +65,14 @@ Run_nimbus <- function() {
 #' 
 #' @param adata_path Path to the input anndata file.
 #' @param technology Technology used for the spatial transcriptomics data. One of "cosmx", "visium", "xenium", "merfish", "iss", or "dissociated".
+#' @param device torch device ("cpu", "cuda", "mps" etc.)
+#' 
+#' @importFrom reticulate py_get_attr
 #' 
 #' @export
 Run_nicheformer <- function(adata_path = NULL,
-                            technology = c("cosmx", "visium", "xenium", "merfish", "iss", "dissociated")) {
+                            technology = c("cosmx", "visium", "xenium", "merfish", "iss", "dissociated"), 
+                            device = "cpu") {
   technology <- match.arg(technology)
   
   technology_mean_path <- system.file(
@@ -82,7 +86,7 @@ Run_nicheformer <- function(adata_path = NULL,
   
   proc <- basilisk::basiliskStart(.nicheformer)
   on.exit(basilisk::basiliskStop(proc))
-  basilisk::basiliskRun(proc, function(adata_path, technology_mean_path) {
+  basilisk::basiliskRun(proc, function(adata_path, technology_mean_path, device) {
     
     os <- reticulate::import("os")
     os$environ[["HF_HOME"]] <- ".cache/huggingface"
@@ -111,8 +115,10 @@ Run_nicheformer <- function(adata_path = NULL,
     #########################
     
     # Device selection
-    device <- if (torch$cuda$is_available()) torch$device("cuda") else torch$device("cpu")
-    #device <- torch$device("cpu")
+    # device <- if (torch["device"]$is_available()) torch$device("mps") else torch$device("cpu")
+    print(device)
+    dev <- py_get_attr(torch, device)
+    device <- if (dev$is_available()) torch$device(device) else torch$device("cpu")
     cat(sprintf("Using device: %s\n", device$type))
     
     torch$cuda$empty_cache()
@@ -170,5 +176,5 @@ Run_nicheformer <- function(adata_path = NULL,
     # support is patchy and you usually don't want half-precision downstream.
     return(embeddings$float()$cpu()$numpy())
     
-  }, adata_path = adata_path, technology_mean_path = technology_mean_path)
+  }, adata_path = adata_path, technology_mean_path = technology_mean_path, device = device)
 }

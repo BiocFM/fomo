@@ -6,13 +6,16 @@
 \usage{
 Run_nicheformer(
   adata_path = NULL,
-  technology = c("cosmx", "visium", "xenium", "merfish", "iss", "dissociated")
+  technology = c("cosmx", "visium", "xenium", "merfish", "iss", "dissociated"),
+  device = "cpu"
 )
 }
 \arguments{
 \item{adata_path}{Path to the input anndata file.}
 
 \item{technology}{Technology used for the spatial transcriptomics data. One of "cosmx", "visium", "xenium", "merfish", "iss", or "dissociated".}
+
+\item{device}{torch device ("cpu", "cuda", "mps" etc.)}
 }
 \description{
 This functions runs NicheFormer.

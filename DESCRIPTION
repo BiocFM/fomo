@@ -4,7 +4,7 @@ Title: This package allows deploying a set of pre-defined foundation models for 
 Version: 1.0
 Date: 2026-04-20
 Authors@R: c(
-    person("Artür", "Manukyan",
+    person("Artur", "Manukyan",
         role=c("cre", "aut"),
         email="artur-man@hotmail.com",
         comment=c(ORCID="0000-0002-0441-9517")),
