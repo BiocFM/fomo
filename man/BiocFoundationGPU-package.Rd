@@ -1,30 +1,30 @@
-\name{BiocFoundationGPU-package}
-\alias{BiocFoundationGPU-package}
-\alias{BiocFoundationGPU}
+\name{fomo-package}
+\alias{fomo-package}
+\alias{fomo}
 \docType{package}
 \title{
-\packageTitle{BiocFoundationGPU}
+\packageTitle{fomo}
 }
 \description{
-\packageDescription{BiocFoundationGPU}
+\packageDescription{fomo}
 }
 \details{
 %%  ~~ An overview of how to use the package, ~~
 %%  ~~ including the most important functions ~~
 }
 \author{
-\packageAuthor{BiocFoundationGPU}
+\packageAuthor{fomo}
 
-Maintainer: \packageMaintainer{BiocFoundationGPU}
+Maintainer: \packageMaintainer{fomo}
 }
 \references{
 %%  ~~ Literature or other references for background information ~~
 }
 \keyword{package}
 
-%% Uncomment below to imitate parts of library(help = BiocFoundationGPU)
-%\section{The \file{DESCRIPTION} File}{\packageDESCRIPTION{BiocFoundationGPU}}
-%\section{Documentation Index}{\packageIndices{BiocFoundationGPU}}
+%% Uncomment below to imitate parts of library(help = fomo)
+%\section{The \file{DESCRIPTION} File}{\packageDESCRIPTION{fomo}}
+%\section{Documentation Index}{\packageIndices{fomo}}
 
 \seealso{
 %%  ~~ Optional links to other man pages, e.g. ~~

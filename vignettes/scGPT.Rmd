@@ -1,11 +1,11 @@
 ---
-title: "Running scGPT with BiocFoundationGPU"
-package: BiocFoundationGPU
+title: "Running scGPT with fomo"
+package: fomo
 output:
   BiocStyle::html_document
 bibliography: ../inst/references.bib
 vignette: >
-  %\VignetteIndexEntry{Running scGPT with BiocFoundationGPU}
+  %\VignetteIndexEntry{Running scGPT with fomo}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -61,7 +61,7 @@ Run `Run_scGPT` to embed the cells. The result is a matrix with one row per
 cell and one column per embedding dimension:
 
 ```{r run, eval=FALSE}
-library(BiocFoundationGPU)
+library(fomo)
 
 result <- Run_scGPT(
     h5ad_file = h5ad_file,

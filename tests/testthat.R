@@ -1,2 +1,2 @@
 library(testthat)
-test_check("BiocFoundationGPU")
+test_check("fomo")

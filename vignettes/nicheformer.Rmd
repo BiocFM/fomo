@@ -20,7 +20,7 @@ Loading the necessary packages to run `Nicheformer` in R
 
 ```{r setup}
 library(anndataR)
-library(BiocFoundationGPU)
+library(fomo)
 library(SpatialExperiment)
 ```
 
@@ -28,7 +28,7 @@ Preparing the annDataR object
 
 ```{r annDataR_creation}
 spe <- readRDS(
-  system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "BiocFoundationGPU")
+  system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "fomo")
 )
 
 spatialCoords(spe) |> as.data.frame() -> coords_df

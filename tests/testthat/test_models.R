@@ -1,12 +1,12 @@
 library(anndataR)
 library(SpatialExperiment)
-library(BiocFoundationGPU)
+library(fomo)
 
 test_that("test novae", {
   
   # read spe
   spe <- readRDS(
-    system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "BiocFoundationGPU")
+    system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "fomo")
   )
   spatialCoords(spe) |> as.data.frame() -> coords_df
   colData(spe)$x_coord <- coords_df[, 1]

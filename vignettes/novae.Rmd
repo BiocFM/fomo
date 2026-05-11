@@ -19,10 +19,10 @@ vignette: >
 ```{r setup}
 library(anndataR)
 library(SpatialExperiment)
-library(BiocFoundationGPU)
+library(fomo)
 
 spe <- readRDS(
-  system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "BiocFoundationGPU")
+  system.file("extdata", "CosMx1k_MouseBrain1_100tx_100cl.rds", package = "fomo")
 )
 ```
 

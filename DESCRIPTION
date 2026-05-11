@@ -1,4 +1,4 @@
-Package: BiocFoundationGPU
+Package: fomo
 Type: Package
 Title: This package allows deploying a set of pre-defined foundation models for various tasks in R
 Version: 1.0
@@ -50,4 +50,4 @@ Suggests:
 biocViews:
 Description: More about what it does (maybe more than one line).
 License: What license is it under?
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

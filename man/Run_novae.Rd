@@ -6,6 +6,11 @@
 \usage{
 Run_novae(adata_path = NULL, accelerator = "cpu")
 }
+\arguments{
+\item{adata_path}{Path to the input anndata file.}
+
+\item{accelerator}{Accelerator to use, either "cpu" or "cuda". Default is "cpu".}
+}
 \description{
 This function runs novae.
 }

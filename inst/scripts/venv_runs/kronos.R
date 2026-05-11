@@ -1,4 +1,4 @@
-library(BiocFoundationGPU)
+library(fomo)
 library(reticulate)
 
 reticulate::use_virtualenv("kronos_env")

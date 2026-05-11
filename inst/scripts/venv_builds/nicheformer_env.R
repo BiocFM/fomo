@@ -1,4 +1,4 @@
-library(BiocFoundationGPU)
+library(fomo)
 library(reticulate)
 
 # setup for nicheformer

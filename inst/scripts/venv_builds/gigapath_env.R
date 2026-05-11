@@ -1,4 +1,4 @@
-library(BiocFoundationGPU)
+library(fomo)
 library(reticulate)
 
 # setup for nicheformer
@@ -16,4 +16,4 @@ req <- c(
 # create and install virtual env
 conda_create("gigapath_env", 
              environment = system.file("scripts/venv_builds/environment.yml", 
-                                       package = "BiocFoundationGPU"))
+                                       package = "fomo"))
