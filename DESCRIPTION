@@ -46,7 +46,9 @@ Imports:
 Suggests:
     BiocStyle,
     knitr,
-    testthat
+    testthat,
+    homologene,
+    bluster
 biocViews:
     Software
 Description: More about what it does (maybe more than one line).
