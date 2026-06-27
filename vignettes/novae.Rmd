@@ -29,12 +29,17 @@ spe <- readRDS(
 Prepare h5ad file for Novae
 
 ```{r h5ad_creation}
-spatialCoords(spe) |> as.data.frame() -> coords_df
-colData(spe)$x_coord <- coords_df[, 1]
-colData(spe)$y_coord <- coords_df[, 2]
-reducedDim(spe, "spatial") <- as.matrix(spatialCoords(spe))
-
 adata <- as_AnnData(spe)
+
+# add coordinates to metadata
+spatialCoords(spe) |> as.data.frame() -> coords_df
+adata$obs$x_coord <- coords_df[, 1]
+adata$obs$y_coord <- coords_df[, 2]
+
+# add coordinates as spatial
+coords <- as.matrix(spatialCoords(spe))
+rownames(coords) <- adata$obs_names
+adata$obsm$spatial <- coords
 colnames(adata$obsm$spatial) <- c("x_coord", "y_coord")
 
 # write anndata to tempfile 
@@ -48,25 +53,23 @@ Run Novae
 
 ```{r running_novae}
 novae_data <- Run_novae(tp, accelerator = "cpu")
-novae_data$obsm$novae_latent |> head()
+dim(novae_data$obsm$novae_latent)
+```
+
+Add novae embeddings and annotations to SPE object
+
+```{r add_embed}
+reducedDim(spe, "novae_latent") <- novae_data$obsm$novae_latent
+spe$domain <- as.character(novae_data$obs$novae_domains_7)
 ```
 
 Plotting spatial coordinates coloured by Novae's defined clusters (domains)
 
 ```{r plot_results}
-library(ggplot2)
-
-plot_df <- data.frame(
-  x      = novae_data$obs$x_coord,
-  y      = novae_data$obs$y_coord,
-  domain = as.factor(novae_data$obs$novae_domains_7)
-)
-
-ggplot(plot_df, aes(x = x, y = y, color = domain)) +
-  geom_point(size = 2, alpha = 0.8) +
-  coord_fixed() +
-  theme_classic() +
-  labs(x = "x", y = "y", color = "Novae domain")
+library(ggspavis)
+spe$in_tissue <- 1
+spe$x_centroid <- spe$y_centroid <- NULL
+plotCoords(spe, annotate = "domain", point_size = 2)
 ```
 
 ```{r sessionInfo}

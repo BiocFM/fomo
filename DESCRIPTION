@@ -55,12 +55,8 @@ Suggests:
     homologene,
     org.Hs.eg.db,
     AnnotationDbi,
-    bluster,
-    cluster,
-    dplyr,
     patchwork,
-    uwot,
-    ggplot2
+    ggspavis
 biocViews:
     Software
 Description: More about what it does (maybe more than one line).
