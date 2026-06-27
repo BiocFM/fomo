@@ -42,7 +42,8 @@ Imports:
     reticulate,
     SpatialExperiment,
     SingleCellExperiment,
-    anndataR
+    anndataR,
+    rhdf5
 Suggests:
     BiocStyle,
     knitr,
