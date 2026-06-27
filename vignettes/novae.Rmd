@@ -4,6 +4,7 @@ author: ""
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 abstract: >
     This package takes an h5ad file with the gene count matrix and spatial coordinates as input, runs Novae, creating the Python environment automatically, and returns an annDataR object with the embeddings and domains (spatial clusters).
+
 output:
   rmarkdown::html_document:
     highlight: pygments

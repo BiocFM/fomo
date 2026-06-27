@@ -46,10 +46,20 @@ Imports:
 Suggests:
     BiocStyle,
     knitr,
-    testthat
+    testthat,
+    homologene,
+    org.Hs.eg.db,
+    AnnotationDbi,
+    bluster,
+    cluster,
+    dplyr,
+    patchwork,
+    uwot,
+    ggplot2
 biocViews:
     Software
 Description: More about what it does (maybe more than one line).
 License: What license is it under?
 Config/roxygen2/version: 8.0.0
 VignetteBuilder: knitr
+URL: https://biocfm.github.io/fomo/

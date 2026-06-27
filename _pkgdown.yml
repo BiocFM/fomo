@@ -1,0 +1,7 @@
+url: https://biocfm.github.io/fomo/
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
