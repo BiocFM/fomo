@@ -1,7 +1,7 @@
 Package: fomo
 Type: Package
 Title: This package allows deploying a set of pre-defined foundation models for various tasks in R
-Version: 1.0
+Version: 0.1.0
 Date: 2026-04-20
 Authors@R: c(
     person("Artur", "Manukyan",
@@ -41,12 +41,16 @@ Imports:
     basilisk,
     reticulate,
     SpatialExperiment,
-    anndataR,
-    rhdf5
+    SingleCellExperiment,
+    anndataR
 Suggests:
     BiocStyle,
     knitr,
-    testthat
+    testthat,
+    googledrive,
+    tools,
+    scrapper,
+    scater
 biocViews:
 Description: More about what it does (maybe more than one line).
 License: What license is it under?

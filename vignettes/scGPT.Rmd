@@ -16,9 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 
-This vignette demonstrates how to use `Run_scGPT` to
-embed single-cell RNA-seq data using the
-scGPT model[@cui2024scgpt]. 
+This vignette demonstrates how to use `Run_scGPT` to embed single-cell RNA-seq data using the scGPT model[@cui2024scgpt]. 
 
 scGPT is a foundation model for single-cell mRNA-Seq data. scGPT can be used in many different context and strategies (see their official
 [github](https://github.com/bowang-lab/scGPT) repository). In particular, scGPT provides multiple possible pretrained models which are linked to in their [github README](https://github.com/bowang-lab/scGPT/blob/main/README.md). The models differ based on the training data used. The most common choice of model is the whole-human [`scGPT_human`](https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y), which is trained 33 million normal human cells across a range of tissue types. Tissue-type specific models are available. There is also a "continual pretrained model", [`scGPT_CP`](https://drive.google.com/drive/folders/1_GROJTzXiAV8HB4imruOTk6PEGuNOcgB) that  inherits the pre-trained scGPT whole-human model, and was further supervised by extra cell type labels (using the Tabula Sapiens dataset). 
@@ -31,43 +29,89 @@ scGPT also provides access to their model [huggingface model](https://huggingfac
 
 # Prerequisites
 
-`Run_scGPT` takes a `.h5ad` filename containing the cell transcripts data and a pretrained scGPT model directory as
-input, and returns a matrix of cell embeddings.
+`Run_scGPT` takes a `.h5ad` filename containing the cell transcripts data and a pretrained scGPT model directory as input, and returns a matrix of cell embeddings. We cache all files in a dedicated `model_dir` folder. 
+
+```{r model_dir}
+library(googledrive)
+library(tools)
+drive_deauth()
+
+# create cache for fomo data
+model_dir <- tools::R_user_dir("fomo/scgpt", which = "cache")
+dir.create(model_dir, recursive = TRUE, showWarnings = FALSE)
+```
 
 ## Input data
 
-The input `.h5ad` file used in this vignette is the example data provided by scGPT (batch_covid_subsampled_train.h5ad )[https://github.com/bowang-lab/scGPT/blob/main/tutorials/zero-shot/Tutorial_ZeroShot_Reference_Mapping.ipynb], but we have subsetted to the first 100 cells so that it will run instantaneously even on a CPU. The subsetted 100 cells can be downloaded from:
-<https://drive.google.com/file/d/1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2/view?usp=drive_link>
+The input `.h5ad` file used in this vignette is the example data provided by scGPT (batch_covid_subsampled_train.h5ad )[https://github.com/bowang-lab/scGPT/blob/main/tutorials/zero-shot/Tutorial_ZeroShot_Reference_Mapping.ipynb], but we have subsetted to the first 100 cells so that it will run instantaneously even on a CPU, which we provide in a google drive and download the h5ad file from this location.
+
+```{r h5ad}
+url <- "https://drive.google.com/file/d/1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2"
+folder_id <- googledrive::as_id(url)
+files <- drive_get(folder_id)
+h5ad_file <- file.path(model_dir, files[1,]$name)
+if(!file.exists(h5ad_file))
+  drive_download(files[1,], path = h5ad_file)
+```
 
 ## Model weights
 
-The pretrained scGPT model directory that we use is `scGPT_human` model which can be downloaded from:
-<https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y>
+The pretrained scGPT model directory that we use is `scGPT_human` model which can be downloaded from a google drive provided in https://github.com/bowang-lab/scGPT. The model directory should contain a `.pt` file with the model weights, along with `vocab.json` and `args.json`.
 
-The model directory should contain a `.pt` file with the model weights, along
-with `vocab.json` and `args.json`.
+```{r model_weights}
+url <- "https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y"
+folder_id <- googledrive::as_id(url)
+files <- drive_ls(drive_get(folder_id), recursive = TRUE)
+for (i in seq_along(files)){
+  path <- file.path(model_dir, files[i,]$name)
+  if(!file.exists(path))
+    drive_download(files[i,], path = path)
+}
+list.files(model_dir)
+```
 
 # Running scGPT
 
-Set the paths to the input data and model directory:
+Run `Run_scGPT` to embed the cells given the path to the h5ad file on disk `h5ad_file` and the mode directory `model_dir`. The result is a matrix with one row per cell and one column per embedding dimension:
 
-```{r paths, eval=FALSE}
-dir <- "/path/to/Hackathon/"
-h5ad_file <- file.path(dir, "scHuman_covid/batch_covid_subsampled_test_100cells.h5ad")
-model_dir  <- file.path(dir, "scGPT_model")
-```
-
-Run `Run_scGPT` to embed the cells. The result is a matrix with one row per
-cell and one column per embedding dimension:
-
-```{r run, eval=FALSE}
+```{r run}
 library(fomo)
-
+library(anndataR)
 result <- Run_scGPT(
     h5ad_file = h5ad_file,
     model_dir  = model_dir,
     gene_col   = "gene_name"
 )
+dim(result)
+```
+
+The resulting embedding of scGPT will still be of high dimensions, we can 
+further reduce the dimensionality with PCA and UMAP. 
+
+```{r embed_further}
+library(scrapper)
+
+# reduce with PCA
+result_pca <- runPca(t(result), number = 30, scale = TRUE)
+result_pca <- result_pca$components
+
+# reduce with UMAP
+result_umap <- runUmap(result_pca)
+```
+
+Now we can add this new embeddings to a SingleCellExperiment generated from the 
+same h5ad file. 
+
+```{r embed}
+library(SingleCellExperiment)
+sce <- anndataR::read_h5ad(h5ad_file, as = "SingleCellExperiment")
+
+reducedDim(sce, "scGPT") <- result
+reducedDim(sce, "scGPT_PCA") <- t(result_pca)
+reducedDim(sce, "scGPT_UMAP") <- result_umap
+
+library(scater)
+plotUMAP(sce, dimred = "scGPT_UMAP")
 ```
 
 # Basic Python script

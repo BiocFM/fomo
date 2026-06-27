@@ -9,14 +9,16 @@
 #'   `vocab.json` and `args.json` file.
 #' @param gene_col The gene column name
 #' @param batch_size The batch size passed to `scg.tasks.embed_data` (default 64)
+#' @param device torch device ("cpu", "cuda", "mps" etc.)
+#' 
 #' @details
 #' This function runs the `scg.tasks.embed_data` function
 #'
 #' @export
-Run_scGPT <- function(h5ad_file, model_dir, gene_col, batch_size = 64L) {
+Run_scGPT <- function(h5ad_file, model_dir, gene_col, batch_size = 64L, device = "cpu") {
   proc <- basilisk::basiliskStart(.scgpt)
   on.exit(basilisk::basiliskStop(proc))
-  basilisk::basiliskRun(proc, function(h5ad_file, model_dir, gene_col, batch_size) {
+  basilisk::basiliskRun(proc, function(h5ad_file, model_dir, gene_col, batch_size, device) {
     
     # macOS fix: os.sched_getaffinity is Linux-only; patch it if missing
     os <- reticulate::import("os")
@@ -44,10 +46,11 @@ Run_scGPT <- function(h5ad_file, model_dir, gene_col, batch_size = 64L) {
       adata,
       model_dir,
       gene_col = gene_col,
-      batch_size = as.integer(batch_size)
+      batch_size = as.integer(batch_size),
+      device = device
     )
     
     # return embedding
     return(ref_embed_adata$obsm[["X_scGPT"]])
-  }, h5ad_file = h5ad_file, model_dir = model_dir, gene_col = gene_col, batch_size = batch_size)
+  }, h5ad_file = h5ad_file, model_dir = model_dir, gene_col = gene_col, batch_size = batch_size, device = device)
 }
