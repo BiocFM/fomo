@@ -48,7 +48,14 @@ Suggests:
     knitr,
     testthat,
     homologene,
-    bluster
+    org.Hs.eg.db,
+    AnnotationDbi,
+    bluster,
+    cluster,
+    dplyr,
+    patchwork,
+    uwot,
+    ggplot2
 biocViews:
     Software
 Description: More about what it does (maybe more than one line).
