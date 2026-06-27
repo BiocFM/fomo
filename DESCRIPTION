@@ -51,7 +51,7 @@ Suggests:
     googledrive,
     tools,
     scrapper,
-    scater
+    scater,
     homologene,
     org.Hs.eg.db,
     AnnotationDbi,
