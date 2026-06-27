@@ -1,10 +1,9 @@
 ---
 title: "Running Nicheformer foundational model"
-author: ""
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 abstract: >
-  This package takes an h5ad file with the gene count matrix and spatial coordinates as input, runs Nicheformer creating the Python environment automatically, and returns a matrix with the embeddings.
-  
+    This package takes an h5ad file with the gene count matrix and spatial coordinates as input, runs Nicheformer, creating the Python environment automatically, and returns a matrix with the embeddings.
+
 output:
   rmarkdown::html_document:
     highlight: pygments
