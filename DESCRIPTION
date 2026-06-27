@@ -1,7 +1,7 @@
 Package: fomo
 Type: Package
 Title: This package allows deploying a set of pre-defined foundation models for various tasks in R
-Version: 1.0
+Version: 0.1.0
 Date: 2026-04-20
 Authors@R: c(
     person("Artur", "Manukyan",
@@ -48,6 +48,8 @@ Suggests:
     knitr,
     testthat
 biocViews:
+    Software
 Description: More about what it does (maybe more than one line).
 License: What license is it under?
 Config/roxygen2/version: 8.0.0
+VignetteBuilder: knitr
