@@ -41,21 +41,22 @@ Imports:
     basilisk,
     reticulate,
     SpatialExperiment,
+    SingleCellExperiment,
     anndataR,
     rhdf5
 Suggests:
     BiocStyle,
     knitr,
     testthat,
+    googledrive,
+    tools,
+    scrapper,
+    scater,
     homologene,
     org.Hs.eg.db,
     AnnotationDbi,
-    bluster,
-    cluster,
-    dplyr,
     patchwork,
-    uwot,
-    ggplot2
+    ggspavis
 biocViews:
     Software
 Description: More about what it does (maybe more than one line).
