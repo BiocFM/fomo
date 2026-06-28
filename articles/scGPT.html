@@ -107,44 +107,205 @@ models and store them in a local directory for
 </h2>
 <p><code>Run_scGPT</code> takes a <code>.h5ad</code> filename containing
 the cell transcripts data and a pretrained scGPT model directory as
-input, and returns a matrix of cell embeddings.</p>
+input, and returns a matrix of cell embeddings. We cache all files in a
+dedicated <code>model_dir</code> folder.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://googledrive.tidyverse.org" class="external-link">googledrive</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tools</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_deauth.html" class="external-link">drive_deauth</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># create cache for fomo data</span></span>
+<span><span class="va">model_dir</span> <span class="op">&lt;-</span> <span class="fu">tools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/tools/userdir.html" class="external-link">R_user_dir</a></span><span class="op">(</span><span class="st">"fomo/scgpt"</span>, which <span class="op">=</span> <span class="st">"cache"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">model_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="input-data">Input data<a class="anchor" aria-label="anchor" href="#input-data"></a>
 </h3>
 <p>The input <code>.h5ad</code> file used in this vignette is the
 example data provided by scGPT (batch_covid_subsampled_train.h5ad )[<a href="https://github.com/bowang-lab/scGPT/blob/main/tutorials/zero-shot/Tutorial_ZeroShot_Reference_Mapping.ipynb" class="external-link uri">https://github.com/bowang-lab/scGPT/blob/main/tutorials/zero-shot/Tutorial_ZeroShot_Reference_Mapping.ipynb</a>],
 but we have subsetted to the first 100 cells so that it will run
-instantaneously even on a CPU. The subsetted 100 cells can be downloaded
-from: <a href="https://drive.google.com/file/d/1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2/view?usp=drive_link" class="external-link uri">https://drive.google.com/file/d/1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2/view?usp=drive_link</a></p>
+instantaneously even on a CPU, which we provide in a google drive and
+download the h5ad file from this location.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="st">"https://drive.google.com/file/d/1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2"</span></span>
+<span><span class="va">folder_id</span> <span class="op">&lt;-</span> <span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="va">url</span><span class="op">)</span></span>
+<span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_get.html" class="external-link">drive_get</a></span><span class="op">(</span><span class="va">folder_id</span><span class="op">)</span></span>
+<span><span class="va">h5ad_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">model_dir</span>, <span class="va">files</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">$</span><span class="va">name</span><span class="op">)</span></span>
+<span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">h5ad_file</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="va">files</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span>, path <span class="op">=</span> <span class="va">h5ad_file</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #00BBBB;">batch_covid_subsampled_test_100cells.h5ad</span></span></span>
+<span><span class="co">##   <span style="color: #555555;">&lt;id: 1Do7CXaaSTwEySGWHMKAkpN5G_g-OY8y2&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #0000BB;">/home/runner/.cache/R/fomo/scgpt/batch_covid_subsampled_test_100cells.h5ad</span></span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="model-weights">Model weights<a class="anchor" aria-label="anchor" href="#model-weights"></a>
 </h3>
 <p>The pretrained scGPT model directory that we use is
-<code>scGPT_human</code> model which can be downloaded from: <a href="https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y" class="external-link uri">https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y</a></p>
-<p>The model directory should contain a <code>.pt</code> file with the
-model weights, along with <code>vocab.json</code> and
-<code>args.json</code>.</p>
+<code>scGPT_human</code> model which can be downloaded from a google
+drive provided in <a href="https://github.com/bowang-lab/scGPT" class="external-link uri">https://github.com/bowang-lab/scGPT</a>. The model directory
+should contain a <code>.pt</code> file with the model weights, along
+with <code>vocab.json</code> and <code>args.json</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">url</span> <span class="op">&lt;-</span> <span class="st">"https://drive.google.com/drive/folders/1oWh_-ZRdhtoGQ2Fw24HP41FgLoomVo-y"</span></span>
+<span><span class="va">folder_id</span> <span class="op">&lt;-</span> <span class="fu">googledrive</span><span class="fu">::</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_id.html" class="external-link">as_id</a></span><span class="op">(</span><span class="va">url</span><span class="op">)</span></span>
+<span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_ls.html" class="external-link">drive_ls</a></span><span class="op">(</span><span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_get.html" class="external-link">drive_get</a></span><span class="op">(</span><span class="va">folder_id</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">model_dir</span>, <span class="va">files</span><span class="op">[</span><span class="va">i</span>,<span class="op">]</span><span class="op">$</span><span class="va">name</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://googledrive.tidyverse.org/reference/drive_download.html" class="external-link">drive_download</a></span><span class="op">(</span><span class="va">files</span><span class="op">[</span><span class="va">i</span>,<span class="op">]</span>, path <span class="op">=</span> <span class="va">path</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #00BBBB;">vocab.json</span> <span style="color: #555555;">&lt;id: 1H3E_MJ-Dl36AQV6jLbna2EdvgPaqvqcC&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #0000BB;">/home/runner/.cache/R/fomo/scgpt/vocab.json</span></span></span></code></pre>
+<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #00BBBB;">args.json</span> <span style="color: #555555;">&lt;id: 1hh2zGKyWAx3DyovD30GStZ3QlzmSqdk1&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #0000BB;">/home/runner/.cache/R/fomo/scgpt/args.json</span></span></span></code></pre>
+<pre><code><span><span class="co">## File downloaded:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #00BBBB;">best_model.pt</span> <span style="color: #555555;">&lt;id: 14AebJfGOUF047Eg40hk57HCtrb0fyDTm&gt;</span></span></span></code></pre>
+<pre><code><span><span class="co">## Saved locally as:</span></span></code></pre>
+<pre><code><span><span class="co">## • <span style="color: #0000BB;">/home/runner/.cache/R/fomo/scgpt/best_model.pt</span></span></span></code></pre>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">model_dir</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] "args.json"                                </span></span>
+<span><span class="co">## [2] "batch_covid_subsampled_test_100cells.h5ad"</span></span>
+<span><span class="co">## [3] "best_model.pt"                            </span></span>
+<span><span class="co">## [4] "vocab.json"</span></span></code></pre>
 </div>
 </div>
 <div class="section level2">
 <h2 id="running-scgpt">Running scGPT<a class="anchor" aria-label="anchor" href="#running-scgpt"></a>
 </h2>
-<p>Set the paths to the input data and model directory:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"/path/to/Hackathon/"</span></span>
-<span><span class="va">h5ad_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"scHuman_covid/batch_covid_subsampled_test_100cells.h5ad"</span><span class="op">)</span></span>
-<span><span class="va">model_dir</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"scGPT_model"</span><span class="op">)</span></span></code></pre></div>
-<p>Run <code>Run_scGPT</code> to embed the cells. The result is a matrix
-with one row per cell and one column per embedding dimension:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<p>Run <code>Run_scGPT</code> to embed the cells given the path to the
+h5ad file on disk <code>h5ad_file</code> and the mode directory
+<code>model_dir</code>. The result is a matrix with one row per cell and
+one column per embedding dimension:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://biocfm.github.io/fomo/">fomo</a></span><span class="op">)</span></span>
-<span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://anndataR.scverse.org/" class="external-link">anndataR</a></span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Run_scGPT.html">Run_scGPT</a></span><span class="op">(</span></span>
 <span>    h5ad_file <span class="op">=</span> <span class="va">h5ad_file</span>,</span>
 <span>    model_dir  <span class="op">=</span> <span class="va">model_dir</span>,</span>
 <span>    gene_col   <span class="op">=</span> <span class="st">"gene_name"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Using Python: /home/runner/.pyenv/versions/3.12.13/bin/python3.12</span></span>
+<span><span class="co">## Creating virtual environment '/home/runner/.cache/R/basilisk/1.24.0/fomo/0.1.0/scgpt' ...</span></span></code></pre>
+<pre><code><span><span class="co">## + /home/runner/.pyenv/versions/3.12.13/bin/python3.12 -m venv /home/runner/.cache/R/basilisk/1.24.0/fomo/0.1.0/scgpt</span></span></code></pre>
+<pre><code><span><span class="co">## Done!</span></span>
+<span><span class="co">## Installing packages: pip, wheel, setuptools</span></span></code></pre>
+<pre><code><span><span class="co">## + /home/runner/.cache/R/basilisk/1.24.0/fomo/0.1.0/scgpt/bin/python -m pip install --upgrade pip wheel setuptools</span></span></code></pre>
+<pre><code><span><span class="co">## Installing packages: 'scgpt==0.2.4', 'torch==2.2.0', 'ipython==9.12.0', 'numpy==1.26.4'</span></span></code></pre>
+<pre><code><span><span class="co">## + /home/runner/.cache/R/basilisk/1.24.0/fomo/0.1.0/scgpt/bin/python -m pip install --upgrade --no-user 'scgpt==0.2.4' 'torch==2.2.0' 'ipython==9.12.0' 'numpy==1.26.4'</span></span></code></pre>
+<pre><code><span><span class="co">## Virtual environment '/home/runner/.cache/R/basilisk/1.24.0/fomo/0.1.0/scgpt' successfully created.</span></span>
+<span><span class="co">## scGPT - INFO - match 1173/1200 genes in vocabulary of size 60697.</span></span></code></pre>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## [1] 100 512</span></span></code></pre>
+<p>The resulting embedding of scGPT will still be of high dimensions, we
+can further reduce the dimensionality with PCA and UMAP.</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/libscran/scrapper" class="external-link">scrapper</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># reduce with PCA</span></span>
+<span><span class="va">result_pca</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/scrapper/man/runPca.html" class="external-link">runPca</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span>, number <span class="op">=</span> <span class="fl">30</span>, scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">result_pca</span> <span class="op">&lt;-</span> <span class="va">result_pca</span><span class="op">$</span><span class="va">components</span></span>
+<span></span>
+<span><span class="co"># reduce with UMAP</span></span>
+<span><span class="va">result_umap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/scrapper/man/runUmap.html" class="external-link">runUmap</a></span><span class="op">(</span><span class="va">result_pca</span><span class="op">)</span></span></code></pre></div>
+<p>Now we can add this new embeddings to a SingleCellExperiment
+generated from the same h5ad file.</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SingleCellExperiment</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Loading required package: SummarizedExperiment</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: MatrixGenerics</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: matrixStats</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'MatrixGenerics'</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:matrixStats':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,</span></span>
+<span><span class="co">##     colCounts, colCummaxs, colCummins, colCumprods, colCumsums,</span></span>
+<span><span class="co">##     colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,</span></span>
+<span><span class="co">##     colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,</span></span>
+<span><span class="co">##     colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,</span></span>
+<span><span class="co">##     colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,</span></span>
+<span><span class="co">##     colWeightedMeans, colWeightedMedians, colWeightedSds,</span></span>
+<span><span class="co">##     colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,</span></span>
+<span><span class="co">##     rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,</span></span>
+<span><span class="co">##     rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,</span></span>
+<span><span class="co">##     rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,</span></span>
+<span><span class="co">##     rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,</span></span>
+<span><span class="co">##     rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,</span></span>
+<span><span class="co">##     rowWeightedMads, rowWeightedMeans, rowWeightedMedians,</span></span>
+<span><span class="co">##     rowWeightedSds, rowWeightedVars</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: GenomicRanges</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: stats4</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: BiocGenerics</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: generics</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'generics'</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:base':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     as.difftime, as.factor, as.ordered, intersect, is.element, setdiff,</span></span>
+<span><span class="co">##     setequal, union</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'BiocGenerics'</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:stats':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     IQR, mad, sd, var, xtabs</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:base':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     anyDuplicated, aperm, append, as.data.frame, basename, cbind,</span></span>
+<span><span class="co">##     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,</span></span>
+<span><span class="co">##     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,</span></span>
+<span><span class="co">##     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,</span></span>
+<span><span class="co">##     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,</span></span>
+<span><span class="co">##     unsplit, which.max, which.min</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: S4Vectors</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'S4Vectors'</span></span></code></pre>
+<pre><code><span><span class="co">## The following object is masked from 'package:utils':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     findMatches</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:base':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     expand.grid, I, unname</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: IRanges</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: Seqinfo</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: Biobase</span></span></code></pre>
+<pre><code><span><span class="co">## Welcome to Bioconductor</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     Vignettes contain introductory material; view with</span></span>
+<span><span class="co">##     'browseVignettes()'. To cite Bioconductor, see</span></span>
+<span><span class="co">##     'citation("Biobase")', and for packages 'citation("pkgname")'.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'Biobase'</span></span></code></pre>
+<pre><code><span><span class="co">## The following object is masked from 'package:MatrixGenerics':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     rowMedians</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:matrixStats':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     anyMissing, rowMedians</span></span></code></pre>
+<div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu">anndataR</span><span class="fu">::</span><span class="fu"><a href="https://anndataR.scverse.org/reference/read_h5ad.html" class="external-link">read_h5ad</a></span><span class="op">(</span><span class="va">h5ad_file</span>, as <span class="op">=</span> <span class="st">"SingleCellExperiment"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/reducedDims.html" class="external-link">reducedDim</a></span><span class="op">(</span><span class="va">sce</span>, <span class="st">"scGPT"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">result</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/reducedDims.html" class="external-link">reducedDim</a></span><span class="op">(</span><span class="va">sce</span>, <span class="st">"scGPT_PCA"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">result_pca</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/SingleCellExperiment/man/reducedDims.html" class="external-link">reducedDim</a></span><span class="op">(</span><span class="va">sce</span>, <span class="st">"scGPT_UMAP"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">result_umap</span></span>
+<span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://bioconductor.org/packages/scater/" class="external-link">scater</a></span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Loading required package: scuttle</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'scuttle'</span></span></code></pre>
+<pre><code><span><span class="co">## The following objects are masked from 'package:scrapper':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     aggregateAcrossCells, normalizeCounts</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: ggplot2</span></span></code></pre>
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/scater/man/plot_reddim.html" class="external-link">plotUMAP</a></span><span class="op">(</span><span class="va">sce</span>, dimred <span class="op">=</span> <span class="st">"scGPT_UMAP"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="scGPT_files/figure-html/embed-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="basic-python-script">Basic Python script<a class="anchor" aria-label="anchor" href="#basic-python-script"></a>
@@ -165,7 +326,7 @@ ref_embed_adata = scg.tasks.embed_data(
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
@@ -185,22 +346,49 @@ ref_embed_adata = scg.tasks.embed_data(
 <span><span class="co">## tzcode source: system (glibc)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## attached base packages:</span></span>
-<span><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span><span class="co">## [1] stats4    tools     stats     graphics  grDevices utils     datasets </span></span>
+<span><span class="co">## [8] methods   base     </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## other attached packages:</span></span>
-<span><span class="co">## [1] BiocStyle_2.40.0</span></span>
+<span><span class="co">##  [1] scater_1.40.1               ggplot2_4.0.3              </span></span>
+<span><span class="co">##  [3] scuttle_1.22.0              SingleCellExperiment_1.34.0</span></span>
+<span><span class="co">##  [5] SummarizedExperiment_1.42.0 Biobase_2.72.0             </span></span>
+<span><span class="co">##  [7] GenomicRanges_1.64.0        Seqinfo_1.2.0              </span></span>
+<span><span class="co">##  [9] IRanges_2.46.0              S4Vectors_0.50.1           </span></span>
+<span><span class="co">## [11] BiocGenerics_0.58.1         generics_0.1.4             </span></span>
+<span><span class="co">## [13] MatrixGenerics_1.24.0       matrixStats_1.5.0          </span></span>
+<span><span class="co">## [15] scrapper_1.6.3              anndataR_1.2.0             </span></span>
+<span><span class="co">## [17] fomo_0.1.0                  googledrive_2.1.2          </span></span>
+<span><span class="co">## [19] BiocStyle_2.40.0           </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
-<span><span class="co">##  [1] digest_0.6.39       desc_1.4.3          R6_2.6.1           </span></span>
-<span><span class="co">##  [4] bookdown_0.47       fastmap_1.2.0       xfun_0.59          </span></span>
-<span><span class="co">##  [7] cachem_1.1.0        knitr_1.51          htmltools_0.5.9    </span></span>
-<span><span class="co">## [10] rmarkdown_2.31      lifecycle_1.0.5     cli_3.6.6          </span></span>
-<span><span class="co">## [13] sass_0.4.10         pkgdown_2.2.0       textshaping_1.0.5  </span></span>
-<span><span class="co">## [16] jquerylib_0.1.4     systemfonts_1.3.2   compiler_4.6.1     </span></span>
-<span><span class="co">## [19] tools_4.6.1         ragg_1.5.2          bslib_0.11.0       </span></span>
-<span><span class="co">## [22] evaluate_1.0.5      yaml_2.3.12         BiocManager_1.30.27</span></span>
-<span><span class="co">## [25] otel_0.2.0          jsonlite_2.0.0      rlang_1.2.0        </span></span>
-<span><span class="co">## [28] fs_2.1.0</span></span></code></pre>
+<span><span class="co">##  [1] tidyselect_1.2.1    viridisLite_0.4.3   vipor_0.4.7        </span></span>
+<span><span class="co">##  [4] dplyr_1.2.1         farver_2.1.2        viridis_0.6.5      </span></span>
+<span><span class="co">##  [7] filelock_1.0.3      S7_0.2.2            fastmap_1.2.0      </span></span>
+<span><span class="co">## [10] rsvd_1.0.5          digest_0.6.39       lifecycle_1.0.5    </span></span>
+<span><span class="co">## [13] magrittr_2.0.5      compiler_4.6.1      rlang_1.2.0        </span></span>
+<span><span class="co">## [16] sass_0.4.10         yaml_2.3.12         knitr_1.51         </span></span>
+<span><span class="co">## [19] labeling_0.4.3      S4Arrays_1.12.0     curl_7.1.0         </span></span>
+<span><span class="co">## [22] reticulate_1.46.0   DelayedArray_0.38.2 RColorBrewer_1.1-3 </span></span>
+<span><span class="co">## [25] abind_1.4-8         BiocParallel_1.46.0 withr_3.0.3        </span></span>
+<span><span class="co">## [28] purrr_1.2.2         desc_1.4.3          grid_4.6.1         </span></span>
+<span><span class="co">## [31] beachmat_2.28.0     Rhdf5lib_2.0.0      scales_1.4.0       </span></span>
+<span><span class="co">## [34] cli_3.6.6           rmarkdown_2.31      ragg_1.5.2         </span></span>
+<span><span class="co">## [37] otel_0.2.0          httr_1.4.8          ggbeeswarm_0.7.3   </span></span>
+<span><span class="co">## [40] cachem_1.1.0        rhdf5_2.56.0        parallel_4.6.1     </span></span>
+<span><span class="co">## [43] BiocManager_1.30.27 XVector_0.52.0      basilisk_1.24.0    </span></span>
+<span><span class="co">## [46] vctrs_0.7.3         Matrix_1.7-5        jsonlite_2.0.0     </span></span>
+<span><span class="co">## [49] dir.expiry_1.20.0   BiocSingular_1.28.0 bookdown_0.47      </span></span>
+<span><span class="co">## [52] BiocNeighbors_2.6.0 ggrepel_0.9.8       beeswarm_0.4.0     </span></span>
+<span><span class="co">## [55] irlba_2.3.7         systemfonts_1.3.2   jquerylib_0.1.4    </span></span>
+<span><span class="co">## [58] glue_1.8.1          pkgdown_2.2.0       codetools_0.2-20   </span></span>
+<span><span class="co">## [61] gtable_0.3.6        ScaledMatrix_1.20.0 tibble_3.3.1       </span></span>
+<span><span class="co">## [64] pillar_1.11.1       rappdirs_0.3.4      htmltools_0.5.9    </span></span>
+<span><span class="co">## [67] rhdf5filters_1.24.0 R6_2.6.1            textshaping_1.0.5  </span></span>
+<span><span class="co">## [70] evaluate_1.0.5      lattice_0.22-9      png_0.1-9          </span></span>
+<span><span class="co">## [73] gargle_1.6.1        bslib_0.11.0        Rcpp_1.1.1-1.1     </span></span>
+<span><span class="co">## [76] gridExtra_2.3.1     SparseArray_1.12.2  xfun_0.59          </span></span>
+<span><span class="co">## [79] fs_2.1.0            pkgconfig_2.0.3</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
