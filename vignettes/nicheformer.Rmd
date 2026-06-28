@@ -114,8 +114,7 @@ g <- buildSnnGraph(t(nicheformer_data),
 leiden_clusters <- clusterGraph(g, 
                                 method = "leiden", 
                                 leiden.resolution = 1.0, 
-                                leiden.objective = "modularity",
-                                leiden.seed = seed)
+                                leiden.objective = "modularity")
 spe$leiden_clusters <- leiden_clusters$membership
 
 message(sprintf("Leiden found %d clusters", 
